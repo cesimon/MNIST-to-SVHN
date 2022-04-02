@@ -1,0 +1,5 @@
+images/
+mnist/
+svhn/
+.idea/
+__pycache__/
