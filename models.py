@@ -122,3 +122,33 @@ class Discriminator(nn.Module):
 
     def forward(self, img):
         return self.model(img)
+
+# https://github.com/tkhkaeio/CyCADA/blob/b6f7795d7d80e788500ffee8e2d2527a62bf4b87/models/networks.py#L722
+class LeNet(nn.Module): #for 32
+    def __init__(self, input_nc):
+        super(LeNet, self).__init__()
+
+        sequence = [
+            nn.Conv2d(input_nc, 20, kernel_size=5, stride=1, padding=0),
+            nn.MaxPool2d(2, 2),
+            nn.ReLU(True),
+
+            nn.Conv2d(20, 50, kernel_size=5, stride=1, padding=0),
+            nn.Dropout2d(0.5),
+            nn.MaxPool2d(2, 2),
+            nn.ReLU(True),
+
+            nn.Flatten(),
+
+            nn.Linear(50*5*5, 500),
+            nn.ReLU(True),
+            nn.Dropout(0.5),
+
+            nn.Linear(500, 10)
+        ]
+        self.net = nn.Sequential(*sequence)
+
+    def forward(self, input):
+        """Standard forward."""
+        self.out = self.net(input)
+        return self.out
