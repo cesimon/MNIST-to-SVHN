@@ -11,6 +11,7 @@ import torch
 import torch.optim as optim
 from torchsummary import summary
 from torchvision.utils import save_image, make_grid
+from torch.utils.tensorboard import SummaryWriter
 
 # Numpy imports
 import numpy as np
@@ -152,6 +153,9 @@ def training_loop(MNIST_dataloader,
     fixed_MNIST = fixed_MNIST.to(device)
     fixed_SVHN = fixed_SVHN.to(device)
 
+    # Tensorboard
+    writer = SummaryWriter(opts.tensorboard_path)
+
     prev_time = time.time()
     for epoch in range(1, opts.n_epochs+1):
         # Reset for each epoch
@@ -261,6 +265,11 @@ def training_loop(MNIST_dataloader,
                     )
                 )
 
+                writer.add_scalar('Loss/Discriminator', D_loss, (epoch-1)*iter_per_epoch + i)
+                writer.add_scalar('Loss/Generator', G_loss, (epoch-1)*iter_per_epoch + i)
+                writer.add_scalar('Loss/Generator_GAN', G_GAN_loss, (epoch-1)*iter_per_epoch + i)
+                writer.add_scalar('Loss/Generator_Cycle', G_cycle_loss, (epoch-1)*iter_per_epoch + i)
+
         # Save the generated samples
         sample_images(G_MNIST_SVHN, G_SVHN_MNIST, fixed_MNIST, fixed_SVHN, epoch)
 
@@ -301,6 +310,7 @@ def create_parser():
     parser.add_argument("--decay_epoch", type=int, default=100, help="epoch from which to start lr decay")
     parser.add_argument("--n_residual_blocks", type=int, default=9, help="number of residual blocks in generator")
     parser.add_argument("--lambda_cyc", type=float, default=10.0, help="cycle loss weight")
+    parser.add_argument("--tensorboard_path", default='./runs/default', help="tensorboard path")
 
     return parser
 
