@@ -40,13 +40,14 @@ class GeneratorResNet(nn.Module):
     def __init__(self, input_shape, num_residual_blocks, output_channels):
         super(GeneratorResNet, self).__init__()
 
-        channels = input_shape[0]
+        # The same model is used to generate SVHN from MNIST and MNIST from SVHN
+        input_channels = input_shape[0]
 
         # Initial convolution block
         out_features = 64
         model = [
-            #nn.ReflectionPad2d(channels),
-            nn.Conv2d(channels, out_features, 7, stride=1, padding=3),
+            nn.ReflectionPad2d(3),
+            nn.Conv2d(input_channels, out_features, 7, stride=1, padding=0),
             nn.InstanceNorm2d(out_features),
             nn.ReLU(inplace=True),
         ]
