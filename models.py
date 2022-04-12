@@ -23,13 +23,13 @@ class ResidualBlock(nn.Module):
         super(ResidualBlock, self).__init__()
 
         self.block = nn.Sequential(
-            #nn.ReflectionPad2d(1),
-            nn.Conv2d(in_features, in_features, 3, stride=1, padding=1),
+            nn.ReflectionPad2d(1),
+            nn.Conv2d(in_features, in_features, 3, stride=1, padding=0),
             nn.InstanceNorm2d(in_features),
             nn.ReLU(inplace=True),
-            #nn.ReflectionPad2d(1),
-            nn.Conv2d(in_features, in_features, 3, stride=1, padding=1),
-            nn.InstanceNorm2d(in_features),
+            nn.ReflectionPad2d(1),
+            nn.Conv2d(in_features, in_features, 3, stride=1, padding=0),
+            nn.InstanceNorm2d(in_features)
         )
 
     def forward(self, x):
