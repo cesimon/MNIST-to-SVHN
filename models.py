@@ -40,7 +40,10 @@ class GeneratorResNet(nn.Module):
     def __init__(self, input_shape, num_residual_blocks, output_channels):
         super(GeneratorResNet, self).__init__()
 
-        # The same model is used to generate SVHN from MNIST and MNIST from SVHN
+        # The same model is used to generate SVHN from MNIST and MNIST from SVHN.
+        # Pictures from SVHN have 3 channels, and the ones from MNIST have only one.
+        # Therefore, when creating the generator, we use the shape of future input images
+        # to adapt the number of channels given as input to the first convolution layer.
         input_channels = input_shape[0]
 
         # Initial convolution block
