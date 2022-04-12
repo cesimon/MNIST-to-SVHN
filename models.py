@@ -79,9 +79,13 @@ class GeneratorResNet(nn.Module):
             in_features = out_features
 
         # Output layer
+        # We use the output_channels variable to set the desired number of channels for the output,
+        # because the same model is used to generate SVHN from MNIST and MNIST from SVHN.
+        # Pictures from SVHN have 3 channels, and the ones from MNIST have only one.
         model += [
-            #nn.ReflectionPad2d(channels),
-            nn.Conv2d(out_features, output_channels, 7, stride=1, padding=3), nn.Tanh()
+            nn.ReflectionPad2d(3),
+            nn.Conv2d(out_features, output_channels, 7, stride=1, padding=0),
+            nn.Tanh()
         ]
 
         self.model = nn.Sequential(*model)
