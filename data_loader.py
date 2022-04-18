@@ -25,6 +25,11 @@ def get_svhn_loaders(batch_size=1):
                     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
 
+    # Note from Torchvision documentation:
+    # https://pytorch.org/vision/stable/generated/torchvision.datasets.SVHN.html
+    # "The SVHN dataset assigns the label 10 to the digit 0. However, in this Dataset,
+    # we assign the label 0 to the digit 0 to be compatible with PyTorch loss functions."
+    # Therefore, there's no need to transform the target.
     svhn_train = datasets.SVHN(root='./svhn', split='train', download=True, transform=transform_svhn)
     svhn_test = datasets.SVHN(root='./svhn', split='test', download=True, transform=transform_svhn)
 
