@@ -2,6 +2,7 @@ import argparse
 import datetime
 import time
 import sys
+import itertools
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -120,22 +121,24 @@ def training_loop(MNIST_dataloader,
                   SVHN_test_dataloader,
                   opts):
     """Runs the training loop.
-        * Saves checkpoint every opts.checkpoint_every iterations
-        * Saves generated samples every opts.sample_every iterations
+        * Saves checkpoint/models every epoch
+        * Saves generated samples every epoch
     """
     # Device configuration
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+
     # Losses
+    # We use MSE as loss for standard GAN training as in LSGAN
     criterion_GAN = torch.nn.MSELoss()
+    # L1Loss for cycle-consistency loss as reminded in CyCADA paper
     criterion_cycle = torch.nn.L1Loss()
-    #criterion_identity = torch.nn.L1Loss()
 
 
     # Models
     G_MNIST_SVHN, G_SVHN_MNIST, D_SVHN, D_MNIST = create_model(opts)
 
-    # CycleGAN paper: weights are initialized from a Gaussian distribution N(0,0.02)
+    # CycleGAN paper: weights are initialized from a Gaussian distribution N(0, 0.02)
     G_MNIST_SVHN.apply(weights_init_normal)
     G_SVHN_MNIST.apply(weights_init_normal)
     D_SVHN.apply(weights_init_normal)
@@ -143,29 +146,40 @@ def training_loop(MNIST_dataloader,
 
 
     # Optimizers
-    g_params = list(G_MNIST_SVHN.parameters()) + list(G_SVHN_MNIST.parameters())  # Get generator parameters
-
     # Create optimizers for the generators and discriminators
-    optimizer_G = optim.Adam(g_params, opts.lr, [opts.b1, opts.b2])
-    optimizer_D_SVHN = optim.Adam(D_SVHN.parameters(), opts.lr, [opts.b1, opts.b2])
-    optimizer_D_MNIST = optim.Adam(D_MNIST.parameters(), opts.lr, [opts.b1, opts.b2])
+    optimizer_G = optim.Adam(
+        itertools.chain(G_MNIST_SVHN.parameters(), G_SVHN_MNIST.parameters()), lr=opts.lr, betas=[opts.b1, opts.b2]
+    )
+    optimizer_D_SVHN = optim.Adam(D_SVHN.parameters(), lr=opts.lr, betas=[opts.b1, opts.b2])
+    optimizer_D_MNIST = optim.Adam(D_MNIST.parameters(), lr=opts.lr, betas=[opts.b1, opts.b2])
 
-    # Iterators
+
+    # Iterators for test data
     test_iter_MNIST = iter(MNIST_test_dataloader)
     test_iter_SVHN = iter(SVHN_test_dataloader)
 
     # Get some fixed data for sampling. These are images that are held
     # constant throughout training, that allow us to inspect the model's performance.
-    fixed_MNIST, _ = test_iter_MNIST.next()
-    fixed_SVHN, _ = test_iter_SVHN.next()
+    fixed_MNIST, _ = next(test_iter_MNIST)
+    fixed_SVHN, _ = next(test_iter_SVHN)
+    while fixed_MNIST.size(0) < 20:
+        fixed_MNIST = torch.cat((fixed_MNIST, next(test_iter_MNIST)[0]), 0)
+        fixed_SVHN = torch.cat((fixed_SVHN, next(test_iter_SVHN)[0]), 0)
 
+    # Take first 20 pictures
+    fixed_MNIST = fixed_MNIST[0:20]
+    fixed_SVHN = fixed_SVHN[0:20]
     fixed_MNIST = fixed_MNIST.to(device)
     fixed_SVHN = fixed_SVHN.to(device)
 
-    # Tensorboard
+
+    # Writer to log events with Tensorboard
     writer = SummaryWriter(opts.tensorboard_path)
 
+    # Used to evaluate time needed to process 1 batch
     prev_time = time.time()
+
+    # Main training loop
     for epoch in range(1, opts.n_epochs+1):
         # Reset for each epoch
         iter_MNIST = iter(MNIST_dataloader)
@@ -174,8 +188,9 @@ def training_loop(MNIST_dataloader,
         iter_per_epoch = min(len(iter_MNIST), len(iter_SVHN))
 
         for i in range(iter_per_epoch):
-            MNIST_imgs, _ = iter_MNIST.next()
-            SVHN_imgs, _ = iter_SVHN.next()
+            # Current batch
+            MNIST_imgs, _ = next(iter_MNIST)
+            SVHN_imgs, _ = next(iter_SVHN)
 
             MNIST_imgs = MNIST_imgs.to(device)
             SVHN_imgs = SVHN_imgs.to(device)
@@ -200,7 +215,7 @@ def training_loop(MNIST_dataloader,
             D_MNIST_loss_fake = criterion_GAN(D_MNIST(fake_MNIST), fake)
             D_MNIST_loss = (D_MNIST_loss_real + D_MNIST_loss_fake) / 2
 
-            D_MNIST_loss.backward(retain_graph=True)
+            D_MNIST_loss.backward()
             optimizer_D_MNIST.step()
 
             # -----------------------
@@ -214,7 +229,7 @@ def training_loop(MNIST_dataloader,
             D_SVHN_loss_fake = criterion_GAN(D_SVHN(fake_SVHN), fake)
             D_SVHN_loss = (D_SVHN_loss_real + D_SVHN_loss_fake) / 2
 
-            D_SVHN_loss.backward(retain_graph=True)
+            D_SVHN_loss.backward()
             optimizer_D_SVHN.step()
 
             # Total Discriminator loss
@@ -225,6 +240,10 @@ def training_loop(MNIST_dataloader,
             # ------------------
 
             optimizer_G.zero_grad()
+
+            # Regenerate fake images for generator training
+            fake_MNIST = G_SVHN_MNIST(SVHN_imgs)
+            fake_SVHN = G_MNIST_SVHN(MNIST_imgs)
 
             # GAN loss
             SVHN_MNIST_GAN_loss = criterion_GAN(D_MNIST(fake_MNIST), valid)
