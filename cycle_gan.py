@@ -57,14 +57,23 @@ def create_model(opts):
     """Builds the generators and discriminators.
     """
 
+    # We keep the original number of channels for MNIST and SVHN.
+    # Therefore, the two generators take a different number of channels as input.
+    # Likewise for discriminators.
     input_shape_svhn = (3, 32, 32)
     input_shape_mnist = (1, 32, 32)
 
+    # Generator from MNIST to SVHN. Input: 1 channel. Output: 3 channels.
     G_MNIST_SVHN = GeneratorResNet(input_shape_mnist, opts.n_residual_blocks, 3)
+    # Generator from SVHN to MNIST. Input: 3 channels. Output: 1 channel.
     G_SVHN_MNIST = GeneratorResNet(input_shape_svhn, opts.n_residual_blocks, 1)
+
+    # Discriminator for SVHN
     D_SVHN = Discriminator(input_shape_svhn)
+    # Discriminator for MNIST
     D_MNIST = Discriminator(input_shape_mnist)
 
+    # Print architecture of created models
     #print_models(G_MNIST_SVHN, G_SVHN_MNIST, D_SVHN, D_MNIST)
 
     if torch.cuda.is_available():
@@ -277,7 +286,7 @@ def training_loop(MNIST_dataloader,
 
 
 def main(opts):
-    """Loads the data, creates checkpoint and sample directories, and starts the training loop.
+    """Loads the data, starts the training loop.
     """
     mnist_train_loader, mnist_test_loader = get_mnist_loaders(opts.batch_size)
     svhn_train_loader, svhn_test_loader = get_svhn_loaders(opts.batch_size)
