@@ -101,17 +101,30 @@ def sample_images(G_MNIST_SVHN, G_SVHN_MNIST, fixed_MNIST, fixed_SVHN, epoch):
     G_MNIST_SVHN.eval()
     G_SVHN_MNIST.eval()
 
+    # Generate images (translation and cycle)
     fake_MNIST = G_SVHN_MNIST(fixed_SVHN)
     fake_SVHN = G_MNIST_SVHN(fixed_MNIST)
 
+    recov_MNIST = G_SVHN_MNIST(fake_SVHN)
+    recov_SVHN = G_MNIST_SVHN(fake_MNIST)
+
     # Arange images along x-axis
-    real_MNIST_grid = make_grid(fixed_MNIST, nrow=5, normalize=True)
-    real_SVHN_grid = make_grid(fixed_SVHN, nrow=5, normalize=True)
-    fake_SVHN_grid = make_grid(fake_SVHN, nrow=5, normalize=True)
-    fake_MNIST_grid = make_grid(fake_MNIST, nrow=5, normalize=True)
+    real_MNIST_grid = make_grid(fixed_MNIST, nrow=20, normalize=True)
+    real_SVHN_grid = make_grid(fixed_SVHN, nrow=20, normalize=True)
+    fake_SVHN_grid = make_grid(fake_SVHN, nrow=20, normalize=True)
+    fake_MNIST_grid = make_grid(fake_MNIST, nrow=20, normalize=True)
+    recov_MNIST_grid = make_grid(recov_MNIST, nrow=20, normalize=True)
+    recov_SVHN_grid = make_grid(recov_SVHN, nrow=20, normalize=True)
 
     # Arange images along y-axis
-    image_grid = torch.cat((real_MNIST_grid, fake_SVHN_grid, real_SVHN_grid, fake_MNIST_grid), 1)
+    image_grid = torch.cat((real_MNIST_grid,
+                            fake_SVHN_grid,
+                            recov_MNIST_grid,
+                            real_SVHN_grid,
+                            fake_MNIST_grid,
+                            recov_SVHN_grid),
+                           1)
+
     save_image(image_grid, "images/epoch_%s.png" % epoch, normalize=False)
 
 
