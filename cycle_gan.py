@@ -314,6 +314,7 @@ def training_loop(MNIST_dataloader,
         # Save the generated samples
         sample_images(G_MNIST_SVHN, G_SVHN_MNIST, fixed_MNIST, fixed_SVHN, epoch)
 
+        # Save model weights
         checkpoint(G_MNIST_SVHN, G_SVHN_MNIST, D_SVHN, D_MNIST, epoch)
 
 
