@@ -14,7 +14,7 @@ def weights_init_normal(m):
 
 
 ##############################
-#           RESNET
+#           Generator
 ##############################
 
 
@@ -132,8 +132,13 @@ class Discriminator(nn.Module):
     def forward(self, img):
         return self.model(img)
 
+
+##############################
+#           Classifier
+##############################
+
 # https://github.com/tkhkaeio/CyCADA/blob/b6f7795d7d80e788500ffee8e2d2527a62bf4b87/models/networks.py#L722
-class LeNet(nn.Module): #for 32
+class LeNet(nn.Module):
     def __init__(self, input_nc):
         super(LeNet, self).__init__()
 
