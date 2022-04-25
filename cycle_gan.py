@@ -307,9 +307,15 @@ def training_loop(MNIST_dataloader,
                 )
 
                 writer.add_scalar('Loss/Discriminator', D_loss, (epoch-1)*iter_per_epoch + i)
+                writer.add_scalar('Loss/D_MNIST', D_MNIST_loss, (epoch - 1) * iter_per_epoch + i)
+                writer.add_scalar('Loss/D_SVHN', D_SVHN_loss, (epoch - 1) * iter_per_epoch + i)
                 writer.add_scalar('Loss/Generator', G_loss, (epoch-1)*iter_per_epoch + i)
                 writer.add_scalar('Loss/Generator_GAN', G_GAN_loss, (epoch-1)*iter_per_epoch + i)
+                writer.add_scalar('Loss/G_SVHN_MNIST_GAN', SVHN_MNIST_GAN_loss, (epoch - 1) * iter_per_epoch + i)
+                writer.add_scalar('Loss/G_MNIST_SVHN_GAN', MNIST_SVHN_GAN_loss, (epoch - 1) * iter_per_epoch + i)
                 writer.add_scalar('Loss/Generator_Cycle', G_cycle_loss, (epoch-1)*iter_per_epoch + i)
+                writer.add_scalar('Loss/MNIST_cycle_loss', MNIST_cycle_loss, (epoch - 1) * iter_per_epoch + i)
+                writer.add_scalar('Loss/SVHN_cycle_loss', SVHN_cycle_loss, (epoch - 1) * iter_per_epoch + i)
 
         # Save the generated samples
         sample_images(G_MNIST_SVHN, G_SVHN_MNIST, fixed_MNIST, fixed_SVHN, epoch)
